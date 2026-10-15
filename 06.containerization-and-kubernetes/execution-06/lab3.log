@@ -1,0 +1,3155 @@
+
+START lab3 2026-10-15T15:51:40.335033+02:00
+
+$ minikube --profile=ece-module06 image pull python:3.13-slim
+
+[exit=0]
+
+$ kubectl --context=ece-module06 create namespace lab-job-cronjob
+namespace/lab-job-cronjob created
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/job-simple.yaml
+job.batch/data-import-job created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob get jobs
+NAME              STATUS    COMPLETIONS   DURATION   AGE
+data-import-job   Running   0/1           0s         0s
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob wait --for=condition=complete job/data-import-job --timeout=120s
+job.batch/data-import-job condition met
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob logs -l job-name=data-import-job
+Starting data import...
+Processing 1000 records...
+Import completed!
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/job-with-retry.yaml
+job.batch/data-transform-job created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob wait --for=condition=failed job/data-transform-job --timeout=240s
+job.batch/data-transform-job condition met
+[exit=0]
+
+$ kubectl --context=ece-module06 get pods -n lab-job-cronjob -l job-name=data-transform-job -o json
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "creationTimestamp": "2026-10-15T13:52:08Z",
+                "generateName": "data-transform-job-",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+                    "job-name": "data-transform-job"
+                },
+                "name": "data-transform-job-75prm",
+                "namespace": "lab-job-cronjob",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "batch/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "Job",
+                        "name": "data-transform-job",
+                        "uid": "bcc0e337-481a-4992-9998-71cd8c63a69c"
+                    }
+                ],
+                "resourceVersion": "607",
+                "uid": "0426eba0-c832-4ea9-bf89-f655fc56d31c"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "args": [
+                            "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                        ],
+                        "command": [
+                            "python",
+                            "-c"
+                        ],
+                        "image": "python:3.13-slim",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "transform",
+                        "resources": {},
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-4zdjq",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "ece-module06",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Never",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-4zdjq",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:11Z",
+                        "observedGeneration": 1,
+                        "status": "False",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:08Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:08Z",
+                        "observedGeneration": 1,
+                        "reason": "PodFailed",
+                        "status": "False",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:08Z",
+                        "observedGeneration": 1,
+                        "reason": "PodFailed",
+                        "status": "False",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:08Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "containerID": "containerd://6ca2ee1645d269f2430e41bff0cfaced97c5b2c1a43cc0a4259a6ec771d7386e",
+                        "image": "docker.io/library/python:3.13-slim",
+                        "imageID": "docker.io/library/python@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f",
+                        "lastState": {},
+                        "name": "transform",
+                        "ready": false,
+                        "resources": {},
+                        "restartCount": 0,
+                        "started": false,
+                        "state": {
+                            "terminated": {
+                                "containerID": "containerd://6ca2ee1645d269f2430e41bff0cfaced97c5b2c1a43cc0a4259a6ec771d7386e",
+                                "exitCode": 1,
+                                "finishedAt": "2026-10-15T13:52:08Z",
+                                "reason": "Error",
+                                "startedAt": "2026-10-15T13:52:08Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-4zdjq",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "192.168.49.2",
+                "hostIPs": [
+                    {
+                        "ip": "192.168.49.2"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Failed",
+                "podIP": "10.244.0.10",
+                "podIPs": [
+                    {
+                        "ip": "10.244.0.10"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-10-15T13:52:08Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "creationTimestamp": "2026-10-15T13:53:08Z",
+                "generateName": "data-transform-job-",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+                    "job-name": "data-transform-job"
+                },
+                "name": "data-transform-job-8445n",
+                "namespace": "lab-job-cronjob",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "batch/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "Job",
+                        "name": "data-transform-job",
+                        "uid": "bcc0e337-481a-4992-9998-71cd8c63a69c"
+                    }
+                ],
+                "resourceVersion": "797",
+                "uid": "5f15465b-8e4c-441b-ae53-3210ba1f6ff4"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "args": [
+                            "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                        ],
+                        "command": [
+                            "python",
+                            "-c"
+                        ],
+                        "image": "python:3.13-slim",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "transform",
+                        "resources": {},
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-98fjr",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "ece-module06",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Never",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-98fjr",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:53:10Z",
+                        "observedGeneration": 1,
+                        "status": "False",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:53:08Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:53:08Z",
+                        "observedGeneration": 1,
+                        "reason": "PodFailed",
+                        "status": "False",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:53:08Z",
+                        "observedGeneration": 1,
+                        "reason": "PodFailed",
+                        "status": "False",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:53:08Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "containerID": "containerd://b76251f0e92587f45ba7495be5177f2f2d5760559ab65e70fd00cc0fae75c343",
+                        "image": "docker.io/library/python:3.13-slim",
+                        "imageID": "docker.io/library/python@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f",
+                        "lastState": {},
+                        "name": "transform",
+                        "ready": false,
+                        "resources": {},
+                        "restartCount": 0,
+                        "started": false,
+                        "state": {
+                            "terminated": {
+                                "containerID": "containerd://b76251f0e92587f45ba7495be5177f2f2d5760559ab65e70fd00cc0fae75c343",
+                                "exitCode": 1,
+                                "finishedAt": "2026-10-15T13:53:08Z",
+                                "reason": "Error",
+                                "startedAt": "2026-10-15T13:53:08Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-98fjr",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "192.168.49.2",
+                "hostIPs": [
+                    {
+                        "ip": "192.168.49.2"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Failed",
+                "podIP": "10.244.0.13",
+                "podIPs": [
+                    {
+                        "ip": "10.244.0.13"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-10-15T13:53:08Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "creationTimestamp": "2026-10-15T13:52:28Z",
+                "generateName": "data-transform-job-",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+                    "job-name": "data-transform-job"
+                },
+                "name": "data-transform-job-bhzgm",
+                "namespace": "lab-job-cronjob",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "batch/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "Job",
+                        "name": "data-transform-job",
+                        "uid": "bcc0e337-481a-4992-9998-71cd8c63a69c"
+                    }
+                ],
+                "resourceVersion": "646",
+                "uid": "20b2b7b3-32f6-4a3d-a091-c8c65196ff14"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "args": [
+                            "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                        ],
+                        "command": [
+                            "python",
+                            "-c"
+                        ],
+                        "image": "python:3.13-slim",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "transform",
+                        "resources": {},
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-tvhts",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "ece-module06",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Never",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-tvhts",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:30Z",
+                        "observedGeneration": 1,
+                        "status": "False",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:28Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:28Z",
+                        "observedGeneration": 1,
+                        "reason": "PodFailed",
+                        "status": "False",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:28Z",
+                        "observedGeneration": 1,
+                        "reason": "PodFailed",
+                        "status": "False",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:28Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "containerID": "containerd://9c6bfa6a5cbd3ce4df3da7553e8fdc60336a4c7886a0c753b6bb506495c7dc81",
+                        "image": "docker.io/library/python:3.13-slim",
+                        "imageID": "docker.io/library/python@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f",
+                        "lastState": {},
+                        "name": "transform",
+                        "ready": false,
+                        "resources": {},
+                        "restartCount": 0,
+                        "started": false,
+                        "state": {
+                            "terminated": {
+                                "containerID": "containerd://9c6bfa6a5cbd3ce4df3da7553e8fdc60336a4c7886a0c753b6bb506495c7dc81",
+                                "exitCode": 1,
+                                "finishedAt": "2026-10-15T13:52:28Z",
+                                "reason": "Error",
+                                "startedAt": "2026-10-15T13:52:28Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-tvhts",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "192.168.49.2",
+                "hostIPs": [
+                    {
+                        "ip": "192.168.49.2"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Failed",
+                "podIP": "10.244.0.11",
+                "podIPs": [
+                    {
+                        "ip": "10.244.0.11"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-10-15T13:52:28Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "creationTimestamp": "2026-10-15T13:51:57Z",
+                "generateName": "data-transform-job-",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+                    "job-name": "data-transform-job"
+                },
+                "name": "data-transform-job-qcvrc",
+                "namespace": "lab-job-cronjob",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "batch/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "Job",
+                        "name": "data-transform-job",
+                        "uid": "bcc0e337-481a-4992-9998-71cd8c63a69c"
+                    }
+                ],
+                "resourceVersion": "575",
+                "uid": "fd37276d-bae7-46b0-b957-96f2847c48b3"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "args": [
+                            "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                        ],
+                        "command": [
+                            "python",
+                            "-c"
+                        ],
+                        "image": "python:3.13-slim",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "transform",
+                        "resources": {},
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-jw2gq",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "ece-module06",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Never",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-jw2gq",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:52:01Z",
+                        "observedGeneration": 1,
+                        "status": "False",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:51:57Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:51:57Z",
+                        "observedGeneration": 1,
+                        "reason": "PodFailed",
+                        "status": "False",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:51:57Z",
+                        "observedGeneration": 1,
+                        "reason": "PodFailed",
+                        "status": "False",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:51:57Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "containerID": "containerd://d21b0285a4a5de153ddfe6ca48d71bdcc74df77c8870a73cd9ac53977075e7fe",
+                        "image": "docker.io/library/python:3.13-slim",
+                        "imageID": "docker.io/library/python@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f",
+                        "lastState": {},
+                        "name": "transform",
+                        "ready": false,
+                        "resources": {},
+                        "restartCount": 0,
+                        "started": false,
+                        "state": {
+                            "terminated": {
+                                "containerID": "containerd://d21b0285a4a5de153ddfe6ca48d71bdcc74df77c8870a73cd9ac53977075e7fe",
+                                "exitCode": 1,
+                                "finishedAt": "2026-10-15T13:51:58Z",
+                                "reason": "Error",
+                                "startedAt": "2026-10-15T13:51:58Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-jw2gq",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "192.168.49.2",
+                "hostIPs": [
+                    {
+                        "ip": "192.168.49.2"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Failed",
+                "podIP": "10.244.0.9",
+                "podIPs": [
+                    {
+                        "ip": "10.244.0.9"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-10-15T13:51:57Z"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
+[exit=0]
+
+$ kubectl --context=ece-module06 get job data-transform-job -n lab-job-cronjob -o json
+{
+    "apiVersion": "batch/v1",
+    "kind": "Job",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"data-transform-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"activeDeadlineSeconds\":300,\"backoffLimit\":3,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import sys\\nprint(\\\"Transforming records...\\\")\\nprint(\\\"ERROR: Validation failed!\\\")\\nsys.exit(1)\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"transform\"}],\"restartPolicy\":\"Never\"}}}}\n"
+        },
+        "creationTimestamp": "2026-10-15T13:51:57Z",
+        "generation": 1,
+        "labels": {
+            "batch.kubernetes.io/controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+            "batch.kubernetes.io/job-name": "data-transform-job",
+            "controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+            "job-name": "data-transform-job"
+        },
+        "name": "data-transform-job",
+        "namespace": "lab-job-cronjob",
+        "resourceVersion": "798",
+        "uid": "bcc0e337-481a-4992-9998-71cd8c63a69c"
+    },
+    "spec": {
+        "activeDeadlineSeconds": 300,
+        "backoffLimit": 3,
+        "completionMode": "NonIndexed",
+        "completions": 1,
+        "manualSelector": false,
+        "parallelism": 1,
+        "podReplacementPolicy": "TerminatingOrFailed",
+        "selector": {
+            "matchLabels": {
+                "batch.kubernetes.io/controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c"
+            }
+        },
+        "suspend": false,
+        "template": {
+            "metadata": {
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "bcc0e337-481a-4992-9998-71cd8c63a69c",
+                    "job-name": "data-transform-job"
+                }
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "args": [
+                            "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                        ],
+                        "command": [
+                            "python",
+                            "-c"
+                        ],
+                        "image": "python:3.13-slim",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "transform",
+                        "resources": {},
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File"
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "restartPolicy": "Never",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "terminationGracePeriodSeconds": 30
+            }
+        }
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastProbeTime": "2026-10-15T13:53:11Z",
+                "lastTransitionTime": "2026-10-15T13:53:11Z",
+                "message": "Job has reached the specified backoff limit",
+                "reason": "BackoffLimitExceeded",
+                "status": "True",
+                "type": "FailureTarget"
+            },
+            {
+                "lastProbeTime": "2026-10-15T13:53:11Z",
+                "lastTransitionTime": "2026-10-15T13:53:11Z",
+                "message": "Job has reached the specified backoff limit",
+                "reason": "BackoffLimitExceeded",
+                "status": "True",
+                "type": "Failed"
+            }
+        ],
+        "failed": 4,
+        "ready": 0,
+        "startTime": "2026-10-15T13:51:57Z",
+        "terminating": 0,
+        "uncountedTerminatedPods": {}
+    }
+}
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob describe job data-transform-job
+Name:                     data-transform-job
+Namespace:                lab-job-cronjob
+Selector:                 batch.kubernetes.io/controller-uid=bcc0e337-481a-4992-9998-71cd8c63a69c
+Labels:                   batch.kubernetes.io/controller-uid=bcc0e337-481a-4992-9998-71cd8c63a69c
+                          batch.kubernetes.io/job-name=data-transform-job
+                          controller-uid=bcc0e337-481a-4992-9998-71cd8c63a69c
+                          job-name=data-transform-job
+Annotations:              <none>
+Parallelism:              1
+Completions:              1
+Completion Mode:          NonIndexed
+Suspend:                  false
+Backoff Limit:            3
+Start Time:               Thu, 15 Oct 2026 15:51:57 +0200
+Active Deadline Seconds:  300s
+Pods Statuses:            0 Active (0 Ready) / 0 Succeeded / 4 Failed
+Pod Template:
+  Labels:  batch.kubernetes.io/controller-uid=bcc0e337-481a-4992-9998-71cd8c63a69c
+           batch.kubernetes.io/job-name=data-transform-job
+           controller-uid=bcc0e337-481a-4992-9998-71cd8c63a69c
+           job-name=data-transform-job
+  Containers:
+   transform:
+    Image:      python:3.13-slim
+    Port:       <none>
+    Host Port:  <none>
+    Command:
+      python
+      -c
+    Args:
+      import sys
+      print("Transforming records...")
+      print("ERROR: Validation failed!")
+      sys.exit(1)
+      
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Events:
+  Type     Reason                Age   From            Message
+  ----     ------                ----  ----            -------
+  Normal   SuccessfulCreate      76s   job-controller  Created pod: data-transform-job-qcvrc
+  Normal   SuccessfulCreate      65s   job-controller  Created pod: data-transform-job-75prm
+  Normal   SuccessfulCreate      45s   job-controller  Created pod: data-transform-job-bhzgm
+  Normal   SuccessfulCreate      5s    job-controller  Created pod: data-transform-job-8445n
+  Warning  BackoffLimitExceeded  2s    job-controller  Job has reached the specified backoff limit
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob logs data-transform-job-75prm
+Transforming records...
+ERROR: Validation failed!
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob logs data-transform-job-8445n
+Transforming records...
+ERROR: Validation failed!
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob logs data-transform-job-bhzgm
+Transforming records...
+ERROR: Validation failed!
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob logs data-transform-job-qcvrc
+Transforming records...
+ERROR: Validation failed!
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob delete job data-transform-job --wait=true
+job.batch "data-transform-job" deleted from lab-job-cronjob namespace
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/job-deadline-10s.yaml
+job.batch/data-transform-job created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob wait --for=condition=failed job/data-transform-job --timeout=90s
+job.batch/data-transform-job condition met
+[exit=0]
+
+$ kubectl --context=ece-module06 get job data-transform-job -n lab-job-cronjob -o json
+{
+    "apiVersion": "batch/v1",
+    "kind": "Job",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"data-transform-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"activeDeadlineSeconds\":10,\"backoffLimit\":3,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import sys\\nprint(\\\"Transforming records...\\\")\\nprint(\\\"ERROR: Validation failed!\\\")\\nsys.exit(1)\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"transform\"}],\"restartPolicy\":\"Never\"}}}}\n"
+        },
+        "creationTimestamp": "2026-10-15T13:53:17Z",
+        "generation": 1,
+        "labels": {
+            "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+            "batch.kubernetes.io/job-name": "data-transform-job",
+            "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+            "job-name": "data-transform-job"
+        },
+        "name": "data-transform-job",
+        "namespace": "lab-job-cronjob",
+        "resourceVersion": "882",
+        "uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+    },
+    "spec": {
+        "activeDeadlineSeconds": 10,
+        "backoffLimit": 3,
+        "completionMode": "NonIndexed",
+        "completions": 1,
+        "manualSelector": false,
+        "parallelism": 1,
+        "podReplacementPolicy": "TerminatingOrFailed",
+        "selector": {
+            "matchLabels": {
+                "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+            }
+        },
+        "suspend": false,
+        "template": {
+            "metadata": {
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "job-name": "data-transform-job"
+                }
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "args": [
+                            "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                        ],
+                        "command": [
+                            "python",
+                            "-c"
+                        ],
+                        "image": "python:3.13-slim",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "transform",
+                        "resources": {},
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File"
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "restartPolicy": "Never",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "terminationGracePeriodSeconds": 30
+            }
+        }
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastProbeTime": "2026-10-15T13:53:27Z",
+                "lastTransitionTime": "2026-10-15T13:53:27Z",
+                "message": "Job was active longer than specified deadline",
+                "reason": "DeadlineExceeded",
+                "status": "True",
+                "type": "FailureTarget"
+            },
+            {
+                "lastProbeTime": "2026-10-15T13:53:27Z",
+                "lastTransitionTime": "2026-10-15T13:53:27Z",
+                "message": "Job was active longer than specified deadline",
+                "reason": "DeadlineExceeded",
+                "status": "True",
+                "type": "Failed"
+            }
+        ],
+        "failed": 1,
+        "ready": 0,
+        "startTime": "2026-10-15T13:53:17Z",
+        "terminating": 0,
+        "uncountedTerminatedPods": {}
+    }
+}
+[exit=0]
+
+$ kubectl --context=ece-module06 get pods -n lab-job-cronjob -l job-name=data-transform-job -o json
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "creationTimestamp": "2026-10-15T13:53:17Z",
+                "generateName": "data-transform-job-",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "job-name": "data-transform-job"
+                },
+                "name": "data-transform-job-jtj46",
+                "namespace": "lab-job-cronjob",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "batch/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "Job",
+                        "name": "data-transform-job",
+                        "uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+                    }
+                ],
+                "resourceVersion": "874",
+                "uid": "d00feb01-7446-4c15-afeb-fc5a953081dc"
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "args": [
+                            "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                        ],
+                        "command": [
+                            "python",
+                            "-c"
+                        ],
+                        "image": "python:3.13-slim",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "transform",
+                        "resources": {},
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-tn2x9",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "ece-module06",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Never",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "kube-api-access-tn2x9",
+                        "projected": {
+                            "defaultMode": 420,
+                            "sources": [
+                                {
+                                    "serviceAccountToken": {
+                                        "expirationSeconds": 3607,
+                                        "path": "token"
+                                    }
+                                },
+                                {
+                                    "configMap": {
+                                        "items": [
+                                            {
+                                                "key": "ca.crt",
+                                                "path": "ca.crt"
+                                            }
+                                        ],
+                                        "name": "kube-root-ca.crt"
+                                    }
+                                },
+                                {
+                                    "downwardAPI": {
+                                        "items": [
+                                            {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                },
+                                                "path": "namespace"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:53:19Z",
+                        "observedGeneration": 1,
+                        "status": "False",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:53:17Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:53:17Z",
+                        "observedGeneration": 1,
+                        "reason": "PodFailed",
+                        "status": "False",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:53:17Z",
+                        "observedGeneration": 1,
+                        "reason": "PodFailed",
+                        "status": "False",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-10-15T13:53:17Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "containerID": "containerd://1432883ac97ef4de26d58a4e2ad0a758b11e3b558980e8b866de49190926b737",
+                        "image": "docker.io/library/python:3.13-slim",
+                        "imageID": "docker.io/library/python@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f",
+                        "lastState": {},
+                        "name": "transform",
+                        "ready": false,
+                        "resources": {},
+                        "restartCount": 0,
+                        "started": false,
+                        "state": {
+                            "terminated": {
+                                "containerID": "containerd://1432883ac97ef4de26d58a4e2ad0a758b11e3b558980e8b866de49190926b737",
+                                "exitCode": 1,
+                                "finishedAt": "2026-10-15T13:53:18Z",
+                                "reason": "Error",
+                                "startedAt": "2026-10-15T13:53:18Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 0,
+                                "supplementalGroups": [
+                                    0
+                                ],
+                                "uid": 0
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+                                "name": "kube-api-access-tn2x9",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "192.168.49.2",
+                "hostIPs": [
+                    {
+                        "ip": "192.168.49.2"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Failed",
+                "podIP": "10.244.0.18",
+                "podIPs": [
+                    {
+                        "ip": "10.244.0.18"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-10-15T13:53:17Z"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob describe job data-transform-job
+Name:                     data-transform-job
+Namespace:                lab-job-cronjob
+Selector:                 batch.kubernetes.io/controller-uid=f1801c35-af5e-49af-8826-b16d48620f30
+Labels:                   batch.kubernetes.io/controller-uid=f1801c35-af5e-49af-8826-b16d48620f30
+                          batch.kubernetes.io/job-name=data-transform-job
+                          controller-uid=f1801c35-af5e-49af-8826-b16d48620f30
+                          job-name=data-transform-job
+Annotations:              <none>
+Parallelism:              1
+Completions:              1
+Completion Mode:          NonIndexed
+Suspend:                  false
+Backoff Limit:            3
+Start Time:               Thu, 15 Oct 2026 15:53:17 +0200
+Active Deadline Seconds:  10s
+Pods Statuses:            0 Active (0 Ready) / 0 Succeeded / 1 Failed
+Pod Template:
+  Labels:  batch.kubernetes.io/controller-uid=f1801c35-af5e-49af-8826-b16d48620f30
+           batch.kubernetes.io/job-name=data-transform-job
+           controller-uid=f1801c35-af5e-49af-8826-b16d48620f30
+           job-name=data-transform-job
+  Containers:
+   transform:
+    Image:      python:3.13-slim
+    Port:       <none>
+    Host Port:  <none>
+    Command:
+      python
+      -c
+    Args:
+      import sys
+      print("Transforming records...")
+      print("ERROR: Validation failed!")
+      sys.exit(1)
+      
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Events:
+  Type     Reason            Age   From            Message
+  ----     ------            ----  ----            -------
+  Normal   SuccessfulCreate  11s   job-controller  Created pod: data-transform-job-jtj46
+  Warning  DeadlineExceeded  1s    job-controller  Job was active longer than specified deadline
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/job-parallel.yaml
+job.batch/batch-export-job created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob get pods -l job-name=batch-export-job -o wide
+NAME                       READY   STATUS              RESTARTS   AGE   IP       NODE           NOMINATED NODE   READINESS GATES
+batch-export-job-0-76ff9   0/1     ContainerCreating   0          0s    <none>   ece-module06   <none>           <none>
+batch-export-job-1-j7ml5   0/1     ContainerCreating   0          0s    <none>   ece-module06   <none>           <none>
+batch-export-job-2-ht4lh   0/1     ContainerCreating   0          0s    <none>   ece-module06   <none>           <none>
+batch-export-job-3-br7q4   0/1     ContainerCreating   0          0s    <none>   ece-module06   <none>           <none>
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob wait --for=condition=complete job/batch-export-job --timeout=120s
+job.batch/batch-export-job condition met
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob get job batch-export-job
+NAME               STATUS     COMPLETIONS   DURATION   AGE
+batch-export-job   Complete   4/4           8s         9s
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob logs -l job-name=batch-export-job --prefix=true
+[pod/batch-export-job-0-76ff9/export] Pod batch-export-job-0: Exporting shard 0 (users with id % 4 == 0)...
+[pod/batch-export-job-0-76ff9/export] Pod batch-export-job-0: Shard 0 export completed!
+[pod/batch-export-job-1-j7ml5/export] Pod batch-export-job-1: Exporting shard 1 (users with id % 4 == 1)...
+[pod/batch-export-job-1-j7ml5/export] Pod batch-export-job-1: Shard 1 export completed!
+[pod/batch-export-job-2-ht4lh/export] Pod batch-export-job-2: Exporting shard 2 (users with id % 4 == 2)...
+[pod/batch-export-job-2-ht4lh/export] Pod batch-export-job-2: Shard 2 export completed!
+[pod/batch-export-job-3-br7q4/export] Pod batch-export-job-3: Exporting shard 3 (users with id % 4 == 3)...
+[pod/batch-export-job-3-br7q4/export] Pod batch-export-job-3: Shard 3 export completed!
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/cronjob-pipeline.yaml
+cronjob.batch/bronze-to-silver-pipeline created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob get cronjobs
+NAME                        SCHEDULE      TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+bronze-to-silver-pipeline   */2 * * * *   <none>     False     0        <none>          1s
+[exit=0]
+
+$ kubectl --context=ece-module06 get jobs -n lab-job-cronjob -o json
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"batch-export-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"backoffLimit\":2,\"completionMode\":\"Indexed\",\"completions\":4,\"parallelism\":4,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import os, time\\npod = os.getenv('HOSTNAME', 'unknown')\\nshard = int(os.environ['JOB_COMPLETION_INDEX'])\\nprint(f\\\"Pod {pod}: Exporting shard {shard} (users with id % 4 == {shard})...\\\")\\ntime.sleep(5)\\nprint(f\\\"Pod {pod}: Shard {shard} export completed!\\\")\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"export\"}],\"restartPolicy\":\"Never\"}},\"ttlSecondsAfterFinished\":600}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:53:29Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                    "batch.kubernetes.io/job-name": "batch-export-job",
+                    "controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                    "job-name": "batch-export-job"
+                },
+                "name": "batch-export-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "946",
+                "uid": "f93b5d44-16d3-4468-a381-6e6540f1b170"
+            },
+            "spec": {
+                "backoffLimit": 2,
+                "completionMode": "Indexed",
+                "completions": 4,
+                "manualSelector": false,
+                "parallelism": 4,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                            "batch.kubernetes.io/job-name": "batch-export-job",
+                            "controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                            "job-name": "batch-export-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import os, time\npod = os.getenv('HOSTNAME', 'unknown')\nshard = int(os.environ['JOB_COMPLETION_INDEX'])\nprint(f\"Pod {pod}: Exporting shard {shard} (users with id % 4 == {shard})...\")\ntime.sleep(5)\nprint(f\"Pod {pod}: Shard {shard} export completed!\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "export",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                },
+                "ttlSecondsAfterFinished": 600
+            },
+            "status": {
+                "completedIndexes": "0-3",
+                "completionTime": "2026-10-15T13:53:37Z",
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:37Z",
+                        "lastTransitionTime": "2026-10-15T13:53:37Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "SuccessCriteriaMet"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:38Z",
+                        "lastTransitionTime": "2026-10-15T13:53:38Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "Complete"
+                    }
+                ],
+                "ready": 0,
+                "startTime": "2026-10-15T13:53:29Z",
+                "succeeded": 4,
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        },
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"data-import-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import time\\nprint(\\\"Starting data import...\\\")\\ntime.sleep(3)\\nprint(\\\"Processing 1000 records...\\\")\\nprint(\\\"Import completed!\\\")\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"import\"}],\"restartPolicy\":\"Never\"}}}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:51:52Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                    "batch.kubernetes.io/job-name": "data-import-job",
+                    "controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                    "job-name": "data-import-job"
+                },
+                "name": "data-import-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "554",
+                "uid": "204737be-657a-41b9-b9bb-7ec5f9e82557"
+            },
+            "spec": {
+                "backoffLimit": 6,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                            "batch.kubernetes.io/job-name": "data-import-job",
+                            "controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                            "job-name": "data-import-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import time\nprint(\"Starting data import...\")\ntime.sleep(3)\nprint(\"Processing 1000 records...\")\nprint(\"Import completed!\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "import",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            },
+            "status": {
+                "completionTime": "2026-10-15T13:51:58Z",
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:51:58Z",
+                        "lastTransitionTime": "2026-10-15T13:51:58Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "SuccessCriteriaMet"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:51:58Z",
+                        "lastTransitionTime": "2026-10-15T13:51:58Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "Complete"
+                    }
+                ],
+                "ready": 0,
+                "startTime": "2026-10-15T13:51:52Z",
+                "succeeded": 1,
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        },
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"data-transform-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"activeDeadlineSeconds\":10,\"backoffLimit\":3,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import sys\\nprint(\\\"Transforming records...\\\")\\nprint(\\\"ERROR: Validation failed!\\\")\\nsys.exit(1)\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"transform\"}],\"restartPolicy\":\"Never\"}}}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:53:17Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "job-name": "data-transform-job"
+                },
+                "name": "data-transform-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "882",
+                "uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+            },
+            "spec": {
+                "activeDeadlineSeconds": 10,
+                "backoffLimit": 3,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                            "batch.kubernetes.io/job-name": "data-transform-job",
+                            "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                            "job-name": "data-transform-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "transform",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:27Z",
+                        "lastTransitionTime": "2026-10-15T13:53:27Z",
+                        "message": "Job was active longer than specified deadline",
+                        "reason": "DeadlineExceeded",
+                        "status": "True",
+                        "type": "FailureTarget"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:27Z",
+                        "lastTransitionTime": "2026-10-15T13:53:27Z",
+                        "message": "Job was active longer than specified deadline",
+                        "reason": "DeadlineExceeded",
+                        "status": "True",
+                        "type": "Failed"
+                    }
+                ],
+                "failed": 1,
+                "ready": 0,
+                "startTime": "2026-10-15T13:53:17Z",
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
+[exit=0]
+
+$ kubectl --context=ece-module06 get jobs -n lab-job-cronjob -o json
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"batch-export-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"backoffLimit\":2,\"completionMode\":\"Indexed\",\"completions\":4,\"parallelism\":4,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import os, time\\npod = os.getenv('HOSTNAME', 'unknown')\\nshard = int(os.environ['JOB_COMPLETION_INDEX'])\\nprint(f\\\"Pod {pod}: Exporting shard {shard} (users with id % 4 == {shard})...\\\")\\ntime.sleep(5)\\nprint(f\\\"Pod {pod}: Shard {shard} export completed!\\\")\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"export\"}],\"restartPolicy\":\"Never\"}},\"ttlSecondsAfterFinished\":600}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:53:29Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                    "batch.kubernetes.io/job-name": "batch-export-job",
+                    "controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                    "job-name": "batch-export-job"
+                },
+                "name": "batch-export-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "946",
+                "uid": "f93b5d44-16d3-4468-a381-6e6540f1b170"
+            },
+            "spec": {
+                "backoffLimit": 2,
+                "completionMode": "Indexed",
+                "completions": 4,
+                "manualSelector": false,
+                "parallelism": 4,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                            "batch.kubernetes.io/job-name": "batch-export-job",
+                            "controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                            "job-name": "batch-export-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import os, time\npod = os.getenv('HOSTNAME', 'unknown')\nshard = int(os.environ['JOB_COMPLETION_INDEX'])\nprint(f\"Pod {pod}: Exporting shard {shard} (users with id % 4 == {shard})...\")\ntime.sleep(5)\nprint(f\"Pod {pod}: Shard {shard} export completed!\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "export",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                },
+                "ttlSecondsAfterFinished": 600
+            },
+            "status": {
+                "completedIndexes": "0-3",
+                "completionTime": "2026-10-15T13:53:37Z",
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:37Z",
+                        "lastTransitionTime": "2026-10-15T13:53:37Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "SuccessCriteriaMet"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:38Z",
+                        "lastTransitionTime": "2026-10-15T13:53:38Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "Complete"
+                    }
+                ],
+                "ready": 0,
+                "startTime": "2026-10-15T13:53:29Z",
+                "succeeded": 4,
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        },
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"data-import-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import time\\nprint(\\\"Starting data import...\\\")\\ntime.sleep(3)\\nprint(\\\"Processing 1000 records...\\\")\\nprint(\\\"Import completed!\\\")\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"import\"}],\"restartPolicy\":\"Never\"}}}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:51:52Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                    "batch.kubernetes.io/job-name": "data-import-job",
+                    "controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                    "job-name": "data-import-job"
+                },
+                "name": "data-import-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "554",
+                "uid": "204737be-657a-41b9-b9bb-7ec5f9e82557"
+            },
+            "spec": {
+                "backoffLimit": 6,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                            "batch.kubernetes.io/job-name": "data-import-job",
+                            "controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                            "job-name": "data-import-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import time\nprint(\"Starting data import...\")\ntime.sleep(3)\nprint(\"Processing 1000 records...\")\nprint(\"Import completed!\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "import",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            },
+            "status": {
+                "completionTime": "2026-10-15T13:51:58Z",
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:51:58Z",
+                        "lastTransitionTime": "2026-10-15T13:51:58Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "SuccessCriteriaMet"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:51:58Z",
+                        "lastTransitionTime": "2026-10-15T13:51:58Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "Complete"
+                    }
+                ],
+                "ready": 0,
+                "startTime": "2026-10-15T13:51:52Z",
+                "succeeded": 1,
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        },
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"data-transform-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"activeDeadlineSeconds\":10,\"backoffLimit\":3,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import sys\\nprint(\\\"Transforming records...\\\")\\nprint(\\\"ERROR: Validation failed!\\\")\\nsys.exit(1)\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"transform\"}],\"restartPolicy\":\"Never\"}}}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:53:17Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "job-name": "data-transform-job"
+                },
+                "name": "data-transform-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "882",
+                "uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+            },
+            "spec": {
+                "activeDeadlineSeconds": 10,
+                "backoffLimit": 3,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                            "batch.kubernetes.io/job-name": "data-transform-job",
+                            "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                            "job-name": "data-transform-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "transform",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:27Z",
+                        "lastTransitionTime": "2026-10-15T13:53:27Z",
+                        "message": "Job was active longer than specified deadline",
+                        "reason": "DeadlineExceeded",
+                        "status": "True",
+                        "type": "FailureTarget"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:27Z",
+                        "lastTransitionTime": "2026-10-15T13:53:27Z",
+                        "message": "Job was active longer than specified deadline",
+                        "reason": "DeadlineExceeded",
+                        "status": "True",
+                        "type": "Failed"
+                    }
+                ],
+                "failed": 1,
+                "ready": 0,
+                "startTime": "2026-10-15T13:53:17Z",
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
+[exit=0]
+
+$ kubectl --context=ece-module06 get jobs -n lab-job-cronjob -o json
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"batch-export-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"backoffLimit\":2,\"completionMode\":\"Indexed\",\"completions\":4,\"parallelism\":4,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import os, time\\npod = os.getenv('HOSTNAME', 'unknown')\\nshard = int(os.environ['JOB_COMPLETION_INDEX'])\\nprint(f\\\"Pod {pod}: Exporting shard {shard} (users with id % 4 == {shard})...\\\")\\ntime.sleep(5)\\nprint(f\\\"Pod {pod}: Shard {shard} export completed!\\\")\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"export\"}],\"restartPolicy\":\"Never\"}},\"ttlSecondsAfterFinished\":600}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:53:29Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                    "batch.kubernetes.io/job-name": "batch-export-job",
+                    "controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                    "job-name": "batch-export-job"
+                },
+                "name": "batch-export-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "946",
+                "uid": "f93b5d44-16d3-4468-a381-6e6540f1b170"
+            },
+            "spec": {
+                "backoffLimit": 2,
+                "completionMode": "Indexed",
+                "completions": 4,
+                "manualSelector": false,
+                "parallelism": 4,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                            "batch.kubernetes.io/job-name": "batch-export-job",
+                            "controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                            "job-name": "batch-export-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import os, time\npod = os.getenv('HOSTNAME', 'unknown')\nshard = int(os.environ['JOB_COMPLETION_INDEX'])\nprint(f\"Pod {pod}: Exporting shard {shard} (users with id % 4 == {shard})...\")\ntime.sleep(5)\nprint(f\"Pod {pod}: Shard {shard} export completed!\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "export",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                },
+                "ttlSecondsAfterFinished": 600
+            },
+            "status": {
+                "completedIndexes": "0-3",
+                "completionTime": "2026-10-15T13:53:37Z",
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:37Z",
+                        "lastTransitionTime": "2026-10-15T13:53:37Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "SuccessCriteriaMet"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:38Z",
+                        "lastTransitionTime": "2026-10-15T13:53:38Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "Complete"
+                    }
+                ],
+                "ready": 0,
+                "startTime": "2026-10-15T13:53:29Z",
+                "succeeded": 4,
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        },
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"data-import-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import time\\nprint(\\\"Starting data import...\\\")\\ntime.sleep(3)\\nprint(\\\"Processing 1000 records...\\\")\\nprint(\\\"Import completed!\\\")\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"import\"}],\"restartPolicy\":\"Never\"}}}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:51:52Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                    "batch.kubernetes.io/job-name": "data-import-job",
+                    "controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                    "job-name": "data-import-job"
+                },
+                "name": "data-import-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "554",
+                "uid": "204737be-657a-41b9-b9bb-7ec5f9e82557"
+            },
+            "spec": {
+                "backoffLimit": 6,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                            "batch.kubernetes.io/job-name": "data-import-job",
+                            "controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                            "job-name": "data-import-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import time\nprint(\"Starting data import...\")\ntime.sleep(3)\nprint(\"Processing 1000 records...\")\nprint(\"Import completed!\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "import",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            },
+            "status": {
+                "completionTime": "2026-10-15T13:51:58Z",
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:51:58Z",
+                        "lastTransitionTime": "2026-10-15T13:51:58Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "SuccessCriteriaMet"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:51:58Z",
+                        "lastTransitionTime": "2026-10-15T13:51:58Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "Complete"
+                    }
+                ],
+                "ready": 0,
+                "startTime": "2026-10-15T13:51:52Z",
+                "succeeded": 1,
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        },
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"data-transform-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"activeDeadlineSeconds\":10,\"backoffLimit\":3,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import sys\\nprint(\\\"Transforming records...\\\")\\nprint(\\\"ERROR: Validation failed!\\\")\\nsys.exit(1)\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"transform\"}],\"restartPolicy\":\"Never\"}}}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:53:17Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "job-name": "data-transform-job"
+                },
+                "name": "data-transform-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "882",
+                "uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+            },
+            "spec": {
+                "activeDeadlineSeconds": 10,
+                "backoffLimit": 3,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                            "batch.kubernetes.io/job-name": "data-transform-job",
+                            "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                            "job-name": "data-transform-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "transform",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:27Z",
+                        "lastTransitionTime": "2026-10-15T13:53:27Z",
+                        "message": "Job was active longer than specified deadline",
+                        "reason": "DeadlineExceeded",
+                        "status": "True",
+                        "type": "FailureTarget"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:27Z",
+                        "lastTransitionTime": "2026-10-15T13:53:27Z",
+                        "message": "Job was active longer than specified deadline",
+                        "reason": "DeadlineExceeded",
+                        "status": "True",
+                        "type": "Failed"
+                    }
+                ],
+                "failed": 1,
+                "ready": 0,
+                "startTime": "2026-10-15T13:53:17Z",
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
+[exit=0]
+
+$ kubectl --context=ece-module06 get jobs -n lab-job-cronjob -o json
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"batch-export-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"backoffLimit\":2,\"completionMode\":\"Indexed\",\"completions\":4,\"parallelism\":4,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import os, time\\npod = os.getenv('HOSTNAME', 'unknown')\\nshard = int(os.environ['JOB_COMPLETION_INDEX'])\\nprint(f\\\"Pod {pod}: Exporting shard {shard} (users with id % 4 == {shard})...\\\")\\ntime.sleep(5)\\nprint(f\\\"Pod {pod}: Shard {shard} export completed!\\\")\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"export\"}],\"restartPolicy\":\"Never\"}},\"ttlSecondsAfterFinished\":600}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:53:29Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                    "batch.kubernetes.io/job-name": "batch-export-job",
+                    "controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                    "job-name": "batch-export-job"
+                },
+                "name": "batch-export-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "946",
+                "uid": "f93b5d44-16d3-4468-a381-6e6540f1b170"
+            },
+            "spec": {
+                "backoffLimit": 2,
+                "completionMode": "Indexed",
+                "completions": 4,
+                "manualSelector": false,
+                "parallelism": 4,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                            "batch.kubernetes.io/job-name": "batch-export-job",
+                            "controller-uid": "f93b5d44-16d3-4468-a381-6e6540f1b170",
+                            "job-name": "batch-export-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import os, time\npod = os.getenv('HOSTNAME', 'unknown')\nshard = int(os.environ['JOB_COMPLETION_INDEX'])\nprint(f\"Pod {pod}: Exporting shard {shard} (users with id % 4 == {shard})...\")\ntime.sleep(5)\nprint(f\"Pod {pod}: Shard {shard} export completed!\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "export",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                },
+                "ttlSecondsAfterFinished": 600
+            },
+            "status": {
+                "completedIndexes": "0-3",
+                "completionTime": "2026-10-15T13:53:37Z",
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:37Z",
+                        "lastTransitionTime": "2026-10-15T13:53:37Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "SuccessCriteriaMet"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:38Z",
+                        "lastTransitionTime": "2026-10-15T13:53:38Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "Complete"
+                    }
+                ],
+                "ready": 0,
+                "startTime": "2026-10-15T13:53:29Z",
+                "succeeded": 4,
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        },
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "batch.kubernetes.io/cronjob-scheduled-timestamp": "2026-10-15T13:54:00Z"
+                },
+                "creationTimestamp": "2026-10-15T13:54:00Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "aa603511-e171-43c1-af5f-0bfaa572ace8",
+                    "batch.kubernetes.io/job-name": "bronze-to-silver-pipeline-29867874",
+                    "controller-uid": "aa603511-e171-43c1-af5f-0bfaa572ace8",
+                    "job-name": "bronze-to-silver-pipeline-29867874"
+                },
+                "name": "bronze-to-silver-pipeline-29867874",
+                "namespace": "lab-job-cronjob",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "batch/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "CronJob",
+                        "name": "bronze-to-silver-pipeline",
+                        "uid": "46f52db9-66c7-4af9-9432-c36488a8487a"
+                    }
+                ],
+                "resourceVersion": "1064",
+                "uid": "aa603511-e171-43c1-af5f-0bfaa572ace8"
+            },
+            "spec": {
+                "backoffLimit": 6,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "aa603511-e171-43c1-af5f-0bfaa572ace8"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "aa603511-e171-43c1-af5f-0bfaa572ace8",
+                            "batch.kubernetes.io/job-name": "bronze-to-silver-pipeline-29867874",
+                            "controller-uid": "aa603511-e171-43c1-af5f-0bfaa572ace8",
+                            "job-name": "bronze-to-silver-pipeline-29867874"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "from datetime import datetime\nprint(f\"[{datetime.now()}] Bronze→Silver ETL started...\")\nimport time; time.sleep(2)\nprint(f\"[{datetime.now()}] Completed! 500 records processed\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "transform",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            },
+            "status": {
+                "completionTime": "2026-10-15T13:54:06Z",
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:54:06Z",
+                        "lastTransitionTime": "2026-10-15T13:54:06Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "SuccessCriteriaMet"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:54:06Z",
+                        "lastTransitionTime": "2026-10-15T13:54:06Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "Complete"
+                    }
+                ],
+                "ready": 0,
+                "startTime": "2026-10-15T13:54:00Z",
+                "succeeded": 1,
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        },
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"data-import-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import time\\nprint(\\\"Starting data import...\\\")\\ntime.sleep(3)\\nprint(\\\"Processing 1000 records...\\\")\\nprint(\\\"Import completed!\\\")\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"import\"}],\"restartPolicy\":\"Never\"}}}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:51:52Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                    "batch.kubernetes.io/job-name": "data-import-job",
+                    "controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                    "job-name": "data-import-job"
+                },
+                "name": "data-import-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "554",
+                "uid": "204737be-657a-41b9-b9bb-7ec5f9e82557"
+            },
+            "spec": {
+                "backoffLimit": 6,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                            "batch.kubernetes.io/job-name": "data-import-job",
+                            "controller-uid": "204737be-657a-41b9-b9bb-7ec5f9e82557",
+                            "job-name": "data-import-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import time\nprint(\"Starting data import...\")\ntime.sleep(3)\nprint(\"Processing 1000 records...\")\nprint(\"Import completed!\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "import",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            },
+            "status": {
+                "completionTime": "2026-10-15T13:51:58Z",
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:51:58Z",
+                        "lastTransitionTime": "2026-10-15T13:51:58Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "SuccessCriteriaMet"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:51:58Z",
+                        "lastTransitionTime": "2026-10-15T13:51:58Z",
+                        "message": "Reached expected number of succeeded pods",
+                        "reason": "CompletionsReached",
+                        "status": "True",
+                        "type": "Complete"
+                    }
+                ],
+                "ready": 0,
+                "startTime": "2026-10-15T13:51:52Z",
+                "succeeded": 1,
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        },
+        {
+            "apiVersion": "batch/v1",
+            "kind": "Job",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"Job\",\"metadata\":{\"annotations\":{},\"name\":\"data-transform-job\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"activeDeadlineSeconds\":10,\"backoffLimit\":3,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"import sys\\nprint(\\\"Transforming records...\\\")\\nprint(\\\"ERROR: Validation failed!\\\")\\nsys.exit(1)\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"transform\"}],\"restartPolicy\":\"Never\"}}}}\n"
+                },
+                "creationTimestamp": "2026-10-15T13:53:17Z",
+                "generation": 1,
+                "labels": {
+                    "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "batch.kubernetes.io/job-name": "data-transform-job",
+                    "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                    "job-name": "data-transform-job"
+                },
+                "name": "data-transform-job",
+                "namespace": "lab-job-cronjob",
+                "resourceVersion": "882",
+                "uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+            },
+            "spec": {
+                "activeDeadlineSeconds": 10,
+                "backoffLimit": 3,
+                "completionMode": "NonIndexed",
+                "completions": 1,
+                "manualSelector": false,
+                "parallelism": 1,
+                "podReplacementPolicy": "TerminatingOrFailed",
+                "selector": {
+                    "matchLabels": {
+                        "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30"
+                    }
+                },
+                "suspend": false,
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "batch.kubernetes.io/controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                            "batch.kubernetes.io/job-name": "data-transform-job",
+                            "controller-uid": "f1801c35-af5e-49af-8826-b16d48620f30",
+                            "job-name": "data-transform-job"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "import sys\nprint(\"Transforming records...\")\nprint(\"ERROR: Validation failed!\")\nsys.exit(1)\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "transform",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:27Z",
+                        "lastTransitionTime": "2026-10-15T13:53:27Z",
+                        "message": "Job was active longer than specified deadline",
+                        "reason": "DeadlineExceeded",
+                        "status": "True",
+                        "type": "FailureTarget"
+                    },
+                    {
+                        "lastProbeTime": "2026-10-15T13:53:27Z",
+                        "lastTransitionTime": "2026-10-15T13:53:27Z",
+                        "message": "Job was active longer than specified deadline",
+                        "reason": "DeadlineExceeded",
+                        "status": "True",
+                        "type": "Failed"
+                    }
+                ],
+                "failed": 1,
+                "ready": 0,
+                "startTime": "2026-10-15T13:53:17Z",
+                "terminating": 0,
+                "uncountedTerminatedPods": {}
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
+[exit=0]
+OK: a CronJob starts and completes a scheduled Job
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob logs job/bronze-to-silver-pipeline-29867874
+[2026-10-15 13:54:01.023494] Bronze→Silver ETL started...
+[2026-10-15 13:54:03.026882] Completed! 500 records processed
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/cronjob-backup.yaml
+cronjob.batch/daily-backup created
+[exit=0]
+
+$ kubectl --context=ece-module06 get cronjob daily-backup -n lab-job-cronjob -o json
+{
+    "apiVersion": "batch/v1",
+    "kind": "CronJob",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"CronJob\",\"metadata\":{\"annotations\":{},\"name\":\"daily-backup\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"jobTemplate\":{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"command\":[\"python\",\"-c\",\"print('Backup completed')\"],\"image\":\"python:3.13-slim\",\"name\":\"backup\"}],\"restartPolicy\":\"Never\"}}}},\"schedule\":\"0 2 * * *\",\"timeZone\":\"Europe/Paris\"}}\n"
+        },
+        "creationTimestamp": "2026-10-15T13:54:11Z",
+        "generation": 1,
+        "name": "daily-backup",
+        "namespace": "lab-job-cronjob",
+        "resourceVersion": "1073",
+        "uid": "b6601a4d-3a10-4a8d-8df0-9deff156a762"
+    },
+    "spec": {
+        "concurrencyPolicy": "Allow",
+        "failedJobsHistoryLimit": 1,
+        "jobTemplate": {
+            "metadata": {},
+            "spec": {
+                "template": {
+                    "metadata": {},
+                    "spec": {
+                        "containers": [
+                            {
+                                "command": [
+                                    "python",
+                                    "-c",
+                                    "print('Backup completed')"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "backup",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            }
+        },
+        "schedule": "0 2 * * *",
+        "successfulJobsHistoryLimit": 3,
+        "suspend": false,
+        "timeZone": "Europe/Paris"
+    },
+    "status": {}
+}
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob create job backup-manual-run --from=cronjob/daily-backup
+job.batch/backup-manual-run created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob wait --for=condition=complete job/backup-manual-run --timeout=90s
+job.batch/backup-manual-run condition met
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob logs job/backup-manual-run
+Backup completed
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob get jobs
+NAME                                 STATUS     COMPLETIONS   DURATION   AGE
+backup-manual-run                    Complete   1/1           4s         5s
+batch-export-job                     Complete   4/4           8s         48s
+bronze-to-silver-pipeline-29867874   Complete   1/1           6s         17s
+data-import-job                      Complete   1/1           6s         2m25s
+data-transform-job                   Failed     0/1           60s        60s
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob describe job data-import-job
+Name:             data-import-job
+Namespace:        lab-job-cronjob
+Selector:         batch.kubernetes.io/controller-uid=204737be-657a-41b9-b9bb-7ec5f9e82557
+Labels:           batch.kubernetes.io/controller-uid=204737be-657a-41b9-b9bb-7ec5f9e82557
+                  batch.kubernetes.io/job-name=data-import-job
+                  controller-uid=204737be-657a-41b9-b9bb-7ec5f9e82557
+                  job-name=data-import-job
+Annotations:      <none>
+Parallelism:      1
+Completions:      1
+Completion Mode:  NonIndexed
+Suspend:          false
+Backoff Limit:    6
+Start Time:       Thu, 15 Oct 2026 15:51:52 +0200
+Completed At:     Thu, 15 Oct 2026 15:51:58 +0200
+Duration:         6s
+Pods Statuses:    0 Active (0 Ready) / 1 Succeeded / 0 Failed
+Pod Template:
+  Labels:  batch.kubernetes.io/controller-uid=204737be-657a-41b9-b9bb-7ec5f9e82557
+           batch.kubernetes.io/job-name=data-import-job
+           controller-uid=204737be-657a-41b9-b9bb-7ec5f9e82557
+           job-name=data-import-job
+  Containers:
+   import:
+    Image:      python:3.13-slim
+    Port:       <none>
+    Host Port:  <none>
+    Command:
+      python
+      -c
+    Args:
+      import time
+      print("Starting data import...")
+      time.sleep(3)
+      print("Processing 1000 records...")
+      print("Import completed!")
+      
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Events:
+  Type    Reason            Age    From            Message
+  ----    ------            ----   ----            -------
+  Normal  SuccessfulCreate  2m25s  job-controller  Created pod: data-import-job-d4pfk
+  Normal  Completed         2m19s  job-controller  Job completed
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob logs -l job-name=data-import-job
+Starting data import...
+Processing 1000 records...
+Import completed!
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob patch cronjob bronze-to-silver-pipeline --type=merge -p '{"spec": {"suspend": true}}'
+cronjob.batch/bronze-to-silver-pipeline patched
+[exit=0]
+
+$ kubectl --context=ece-module06 get cronjob bronze-to-silver-pipeline -n lab-job-cronjob -o json
+{
+    "apiVersion": "batch/v1",
+    "kind": "CronJob",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"CronJob\",\"metadata\":{\"annotations\":{},\"name\":\"bronze-to-silver-pipeline\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"concurrencyPolicy\":\"Forbid\",\"failedJobsHistoryLimit\":1,\"jobTemplate\":{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"args\":[\"from datetime import datetime\\nprint(f\\\"[{datetime.now()}] Bronze→Silver ETL started...\\\")\\nimport time; time.sleep(2)\\nprint(f\\\"[{datetime.now()}] Completed! 500 records processed\\\")\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"transform\"}],\"restartPolicy\":\"Never\"}}}},\"schedule\":\"*/2 * * * *\",\"successfulJobsHistoryLimit\":3}}\n"
+        },
+        "creationTimestamp": "2026-10-15T13:53:39Z",
+        "generation": 2,
+        "name": "bronze-to-silver-pipeline",
+        "namespace": "lab-job-cronjob",
+        "resourceVersion": "1101",
+        "uid": "46f52db9-66c7-4af9-9432-c36488a8487a"
+    },
+    "spec": {
+        "concurrencyPolicy": "Forbid",
+        "failedJobsHistoryLimit": 1,
+        "jobTemplate": {
+            "metadata": {},
+            "spec": {
+                "template": {
+                    "metadata": {},
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "from datetime import datetime\nprint(f\"[{datetime.now()}] Bronze→Silver ETL started...\")\nimport time; time.sleep(2)\nprint(f\"[{datetime.now()}] Completed! 500 records processed\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "transform",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            }
+        },
+        "schedule": "*/2 * * * *",
+        "successfulJobsHistoryLimit": 3,
+        "suspend": true
+    },
+    "status": {
+        "lastScheduleTime": "2026-10-15T13:54:00Z",
+        "lastSuccessfulTime": "2026-10-15T13:54:06Z"
+    }
+}
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob get cronjobs
+NAME                        SCHEDULE      TIMEZONE       SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+bronze-to-silver-pipeline   */2 * * * *   <none>         True      0        18s             39s
+daily-backup                0 2 * * *     Europe/Paris   False     0        <none>          7s
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob patch cronjob bronze-to-silver-pipeline --type=merge -p '{"spec": {"suspend": false}}'
+cronjob.batch/bronze-to-silver-pipeline patched
+[exit=0]
+
+$ kubectl --context=ece-module06 get cronjob bronze-to-silver-pipeline -n lab-job-cronjob -o json
+{
+    "apiVersion": "batch/v1",
+    "kind": "CronJob",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"batch/v1\",\"kind\":\"CronJob\",\"metadata\":{\"annotations\":{},\"name\":\"bronze-to-silver-pipeline\",\"namespace\":\"lab-job-cronjob\"},\"spec\":{\"concurrencyPolicy\":\"Forbid\",\"failedJobsHistoryLimit\":1,\"jobTemplate\":{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"args\":[\"from datetime import datetime\\nprint(f\\\"[{datetime.now()}] Bronze→Silver ETL started...\\\")\\nimport time; time.sleep(2)\\nprint(f\\\"[{datetime.now()}] Completed! 500 records processed\\\")\\n\"],\"command\":[\"python\",\"-c\"],\"image\":\"python:3.13-slim\",\"name\":\"transform\"}],\"restartPolicy\":\"Never\"}}}},\"schedule\":\"*/2 * * * *\",\"successfulJobsHistoryLimit\":3}}\n"
+        },
+        "creationTimestamp": "2026-10-15T13:53:39Z",
+        "generation": 3,
+        "name": "bronze-to-silver-pipeline",
+        "namespace": "lab-job-cronjob",
+        "resourceVersion": "1109",
+        "uid": "46f52db9-66c7-4af9-9432-c36488a8487a"
+    },
+    "spec": {
+        "concurrencyPolicy": "Forbid",
+        "failedJobsHistoryLimit": 1,
+        "jobTemplate": {
+            "metadata": {},
+            "spec": {
+                "template": {
+                    "metadata": {},
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "from datetime import datetime\nprint(f\"[{datetime.now()}] Bronze→Silver ETL started...\")\nimport time; time.sleep(2)\nprint(f\"[{datetime.now()}] Completed! 500 records processed\")\n"
+                                ],
+                                "command": [
+                                    "python",
+                                    "-c"
+                                ],
+                                "image": "python:3.13-slim",
+                                "imagePullPolicy": "IfNotPresent",
+                                "name": "transform",
+                                "resources": {},
+                                "terminationMessagePath": "/dev/termination-log",
+                                "terminationMessagePolicy": "File"
+                            }
+                        ],
+                        "dnsPolicy": "ClusterFirst",
+                        "restartPolicy": "Never",
+                        "schedulerName": "default-scheduler",
+                        "securityContext": {},
+                        "terminationGracePeriodSeconds": 30
+                    }
+                }
+            }
+        },
+        "schedule": "*/2 * * * *",
+        "successfulJobsHistoryLimit": 3,
+        "suspend": false
+    },
+    "status": {
+        "lastScheduleTime": "2026-10-15T13:54:00Z",
+        "lastSuccessfulTime": "2026-10-15T13:54:06Z"
+    }
+}
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob get cronjobs
+NAME                        SCHEDULE      TIMEZONE       SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+bronze-to-silver-pipeline   */2 * * * *   <none>         False     0        19s             40s
+daily-backup                0 2 * * *     Europe/Paris   False     0        <none>          8s
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob create configmap etl-config --from-literal=BATCH_SIZE=1000 --from-literal=SOURCE_LAYER=bronze --from-literal=TARGET_LAYER=silver
+configmap/etl-config created
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/cronjob-etl.yaml
+cronjob.batch/etl-bronze-to-silver created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob create job etl-manual-run --from=cronjob/etl-bronze-to-silver
+job.batch/etl-manual-run created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob wait --for=condition=complete job/etl-manual-run --timeout=90s
+job.batch/etl-manual-run condition met
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob logs job/etl-manual-run
+[2026-10-15T13:54:22.381587] ETL: bronze -> silver
+[2026-10-15T13:54:22.381587] Batch size: 1000
+[2026-10-15T13:54:22.381587] Reading, validating, deduplicating...
+[2026-10-15T13:54:22.381587] Writing to silver layer...
+[2026-10-15T13:54:22.381587] Completed!
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-job-cronjob get jobs,cronjobs,pods -o wide
+NAME                                           STATUS     COMPLETIONS   DURATION   AGE     CONTAINERS   IMAGES             SELECTOR
+job.batch/backup-manual-run                    Complete   1/1           4s         14s     backup       python:3.13-slim   batch.kubernetes.io/controller-uid=388b2911-66df-4e5d-89e6-6f733074bce6
+job.batch/batch-export-job                     Complete   4/4           8s         57s     export       python:3.13-slim   batch.kubernetes.io/controller-uid=f93b5d44-16d3-4468-a381-6e6540f1b170
+job.batch/bronze-to-silver-pipeline-29867874   Complete   1/1           6s         26s     transform    python:3.13-slim   batch.kubernetes.io/controller-uid=aa603511-e171-43c1-af5f-0bfaa572ace8
+job.batch/data-import-job                      Complete   1/1           6s         2m34s   import       python:3.13-slim   batch.kubernetes.io/controller-uid=204737be-657a-41b9-b9bb-7ec5f9e82557
+job.batch/data-transform-job                   Failed     0/1           69s        69s     transform    python:3.13-slim   batch.kubernetes.io/controller-uid=f1801c35-af5e-49af-8826-b16d48620f30
+job.batch/etl-manual-run                       Complete   1/1           4s         5s      etl          python:3.13-slim   batch.kubernetes.io/controller-uid=54e94917-422a-4ce0-ac74-8dc0a8cbeb65
+
+NAME                                      SCHEDULE      TIMEZONE       SUSPEND   ACTIVE   LAST SCHEDULE   AGE   CONTAINERS   IMAGES             SELECTOR
+cronjob.batch/bronze-to-silver-pipeline   */2 * * * *   <none>         False     0        26s             47s   transform    python:3.13-slim   <none>
+cronjob.batch/daily-backup                0 2 * * *     Europe/Paris   False     0        <none>          15s   backup       python:3.13-slim   <none>
+cronjob.batch/etl-bronze-to-silver        */5 * * * *   <none>         False     0        <none>          6s    etl          python:3.13-slim   <none>
+
+NAME                                           READY   STATUS      RESTARTS   AGE     IP            NODE           NOMINATED NODE   READINESS GATES
+pod/backup-manual-run-4ktk9                    0/1     Completed   0          14s     10.244.0.26   ece-module06   <none>           <none>
+pod/batch-export-job-0-76ff9                   0/1     Completed   0          57s     10.244.0.19   ece-module06   <none>           <none>
+pod/batch-export-job-1-j7ml5                   0/1     Completed   0          57s     10.244.0.21   ece-module06   <none>           <none>
+pod/batch-export-job-2-ht4lh                   0/1     Completed   0          57s     10.244.0.20   ece-module06   <none>           <none>
+pod/batch-export-job-3-br7q4                   0/1     Completed   0          57s     10.244.0.22   ece-module06   <none>           <none>
+pod/bronze-to-silver-pipeline-29867874-fm7zf   0/1     Completed   0          26s     10.244.0.25   ece-module06   <none>           <none>
+pod/data-import-job-d4pfk                      0/1     Completed   0          2m34s   10.244.0.7    ece-module06   <none>           <none>
+pod/data-transform-job-jtj46                   0/1     Error       0          69s     10.244.0.18   ece-module06   <none>           <none>
+pod/etl-manual-run-tbcxb                       0/1     Completed   0          5s      10.244.0.27   ece-module06   <none>           <none>
+[exit=0]
+
+$ kubectl --context=ece-module06 delete namespace lab-job-cronjob --wait=true
+namespace "lab-job-cronjob" deleted
+[exit=0]
+
+$ kubectl --context=ece-module06 get namespace lab-job-cronjob
+Error from server (NotFound): namespaces "lab-job-cronjob" not found
+[exit=1]
+COMPLETED: lab3

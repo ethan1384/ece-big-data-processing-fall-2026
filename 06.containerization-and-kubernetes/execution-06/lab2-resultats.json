@@ -1,0 +1,20 @@
+{
+  "three_configmap_methods": true,
+  "three_secret_methods_and_base64_decoding": true,
+  "configmap_environment": {
+    "LOG_LEVEL": "INFO",
+    "SPARK_WORKERS": "4"
+  },
+  "secret_environment_and_completed_pod": true,
+  "configmap_and_secret_volumes": {
+    "secret_mode": "0600",
+    "files": [
+      "application.yaml",
+      "tables.csv",
+      "s3-credentials.txt"
+    ]
+  },
+  "workloads_removed": true,
+  "status": "COMPLETED",
+  "finished_at_paris": "2026-10-15T15:52:46.795543+02:00"
+}
