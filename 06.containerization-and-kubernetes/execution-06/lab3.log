@@ -9,7 +9,7 @@ $ kubectl --context=ece-module06 create namespace lab-job-cronjob
 namespace/lab-job-cronjob created
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/job-simple.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-3/job-simple.yaml
 job.batch/data-import-job created
 [exit=0]
 
@@ -28,7 +28,7 @@ Processing 1000 records...
 Import completed!
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/job-with-retry.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-3/job-with-retry.yaml
 job.batch/data-transform-job created
 [exit=0]
 
@@ -1085,7 +1085,7 @@ $ kubectl --context=ece-module06 -n lab-job-cronjob delete job data-transform-jo
 job.batch "data-transform-job" deleted from lab-job-cronjob namespace
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/job-deadline-10s.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-3/job-deadline-10s.yaml
 job.batch/data-transform-job created
 [exit=0]
 
@@ -1467,7 +1467,7 @@ Events:
   Warning  DeadlineExceeded  1s    job-controller  Job was active longer than specified deadline
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/job-parallel.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-3/job-parallel.yaml
 job.batch/batch-export-job created
 [exit=0]
 
@@ -1499,7 +1499,7 @@ $ kubectl --context=ece-module06 -n lab-job-cronjob logs -l job-name=batch-expor
 [pod/batch-export-job-3-br7q4/export] Pod batch-export-job-3: Shard 3 export completed!
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/cronjob-pipeline.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-3/cronjob-pipeline.yaml
 cronjob.batch/bronze-to-silver-pipeline created
 [exit=0]
 
@@ -2815,7 +2815,7 @@ $ kubectl --context=ece-module06 -n lab-job-cronjob logs job/bronze-to-silver-pi
 [2026-10-15 13:54:03.026882] Completed! 500 records processed
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/cronjob-backup.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-3/cronjob-backup.yaml
 cronjob.batch/daily-backup created
 [exit=0]
 
@@ -3099,7 +3099,7 @@ $ kubectl --context=ece-module06 -n lab-job-cronjob create configmap etl-config 
 configmap/etl-config created
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-3/cronjob-etl.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-3/cronjob-etl.yaml
 cronjob.batch/etl-bronze-to-silver created
 [exit=0]
 

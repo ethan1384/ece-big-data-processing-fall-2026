@@ -11680,7 +11680,7 @@ $ kubectl --context=ece-module06 delete deployment kubernetes-bootcamp --wait=tr
 deployment.apps "kubernetes-bootcamp" deleted from default namespace
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-1/deployment-1-replica.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-1/deployment-1-replica.yaml
 deployment.apps/kubernetes-bootcamp created
 [exit=0]
 
@@ -11783,7 +11783,7 @@ $ kubectl --context=ece-module06 get deployment kubernetes-bootcamp -o json
 }
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-1/service.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-1/service.yaml
 service/kubernetes-bootcamp-service created
 [exit=0]
 
@@ -12000,7 +12000,7 @@ Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-6cc8c75c6f-8rtxk | 
 Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-6cc8c75c6f-8rtxk | v=1
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-1/deployment.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-1/deployment.yaml
 deployment.apps/kubernetes-bootcamp configured
 [exit=0]
 
@@ -12251,7 +12251,7 @@ Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-6cc8c75c6f-rvzkg | 
 Hello Kubernetes bootcamp! | Running on: kubernetes-bootcamp-6cc8c75c6f-8rtxk | v=1
 [exit=0]
 
-$ kubectl --context=ece-module06 delete -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-1/service.yaml -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-1/deployment.yaml
+$ kubectl --context=ece-module06 delete -f execution-06/manifests/lab-1/service.yaml -f execution-06/manifests/lab-1/deployment.yaml
 service "kubernetes-bootcamp-service" deleted from default namespace
 deployment.apps "kubernetes-bootcamp" deleted from default namespace
 [exit=0]

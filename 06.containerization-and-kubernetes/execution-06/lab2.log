@@ -5,7 +5,7 @@ $ kubectl --context=ece-module06 create namespace lab-configmap-secret
 namespace/lab-configmap-secret created
 [exit=0]
 
-$ kubectl --context=ece-module06 -n lab-configmap-secret create configmap pipeline-config --from-file=/mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-2/pipeline-config.properties
+$ kubectl --context=ece-module06 -n lab-configmap-secret create configmap pipeline-config --from-file=execution-06/manifests/lab-2/pipeline-config.properties
 configmap/pipeline-config created
 [exit=0]
 
@@ -78,7 +78,7 @@ metadata:
   uid: f89edce1-b45c-4560-8bfc-38a6c10d5abe
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-2/configmap-data-platform.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/configmap-data-platform.yaml
 configmap/data-platform-config created
 [exit=0]
 
@@ -143,11 +143,11 @@ $ kubectl --context=ece-module06 -n lab-configmap-secret create secret generic c
 secret/ceph-credentials created
 [exit=0]
 
-$ kubectl --context=ece-module06 -n lab-configmap-secret create secret generic s3-credentials --from-file=/mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-2/s3-credentials.txt
+$ kubectl --context=ece-module06 -n lab-configmap-secret create secret generic s3-credentials --from-file=execution-06/manifests/lab-2/s3-credentials.txt
 secret/s3-credentials created
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-2/secret-ceph-credentials.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/secret-ceph-credentials.yaml
 secret/ceph-s3-credentials created
 [exit=0]
 
@@ -225,19 +225,19 @@ $ kubectl --context=ece-module06 get secret ceph-s3-credentials -n lab-configmap
 [exit=0]
 Decoded sample credentials: {"access-key": "EXEMPLE_CLE_ACCES_MASQUEE", "bucket": "data-platform-bronze", "endpoint": "ceph-rgw.ceph-storage.svc.cluster.local:7480", "secret-key": "EXEMPLE_CLE_SECRETE_MASQUEE"}
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-2/pod-with-configmap.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/pod-with-configmap.yaml
 pod/spark-app created
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-2/pod-with-secret.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/pod-with-secret.yaml
 pod/ceph-connector created
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-2/pod-with-configmap-volume.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/pod-with-configmap-volume.yaml
 pod/spark-config-reader created
 [exit=0]
 
-$ kubectl --context=ece-module06 apply -f /mnt/c/Users/cotte/Documents/Codex/2026-10-15/va/outputs/execution-06/manifests/lab-2/pod-with-secret-volume.yaml
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/pod-with-secret-volume.yaml
 pod/ceph-connector-secure created
 [exit=0]
 

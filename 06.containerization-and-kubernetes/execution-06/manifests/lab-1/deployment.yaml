@@ -5,7 +5,7 @@ metadata:
   labels:
     app: kubernetes-bootcamp
 spec:
-  replicas: 3  # TO COMPLETE #2 (étape 7) : 3 réplicas de l'application
+  replicas: 3  # TO COMPLETE #2: 3 replicas of the app
   selector:
     matchLabels:
       app: kubernetes-bootcamp
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: kubernetes-bootcamp
-        # TO COMPLETE #1 : même image que la partie 2, l'app écoute sur le port 8080 (cf. /server.js)
+        # TO COMPLETE #1: same image as part 2, the app listens on 8080 (see /server.js)
         image: gcr.io/google-samples/kubernetes-bootcamp:v1
         ports:
         - containerPort: 8080
