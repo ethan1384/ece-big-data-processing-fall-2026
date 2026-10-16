@@ -1,0 +1,146 @@
+$ kubectl --context=ece-module06 get pods -n default -l app=kubernetes-bootcamp -o json
+{
+    "apiVersion": "v1",
+    "items": [],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
+
+[exit=0]
+$ kubectl --context=ece-module06 get namespaces -o json
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
+                "creationTimestamp": "2026-10-15T13:50:51Z",
+                "labels": {
+                    "kubernetes.io/metadata.name": "default"
+                },
+                "name": "default",
+                "resourceVersion": "21",
+                "uid": "13d52a98-4b85-4dfe-9013-5c8ba2e73d53"
+            },
+            "spec": {
+                "finalizers": [
+                    "kubernetes"
+                ]
+            },
+            "status": {
+                "phase": "Active"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
+                "creationTimestamp": "2026-10-15T13:50:51Z",
+                "labels": {
+                    "kubernetes.io/metadata.name": "kube-node-lease"
+                },
+                "name": "kube-node-lease",
+                "resourceVersion": "29",
+                "uid": "cc134823-f388-4543-a24d-c68895db041c"
+            },
+            "spec": {
+                "finalizers": [
+                    "kubernetes"
+                ]
+            },
+            "status": {
+                "phase": "Active"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
+                "creationTimestamp": "2026-10-15T13:50:51Z",
+                "labels": {
+                    "kubernetes.io/metadata.name": "kube-public"
+                },
+                "name": "kube-public",
+                "resourceVersion": "12",
+                "uid": "692c37c6-be14-43ea-a3b9-8006ec75984f"
+            },
+            "spec": {
+                "finalizers": [
+                    "kubernetes"
+                ]
+            },
+            "status": {
+                "phase": "Active"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
+                "creationTimestamp": "2026-10-15T13:50:51Z",
+                "labels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                },
+                "name": "kube-system",
+                "resourceVersion": "4",
+                "uid": "b7af045b-9c6b-4355-9dbf-9d867b9fde1e"
+            },
+            "spec": {
+                "finalizers": [
+                    "kubernetes"
+                ]
+            },
+            "status": {
+                "phase": "Active"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}
+
+[exit=0]
+$ kubectl --context=ece-module06 get deployments,services,jobs,cronjobs,pods -A
+NAMESPACE     NAME                             READY   UP-TO-DATE   AVAILABLE   AGE
+kube-system   deployment.apps/coredns          1/1     1            1           5m38s
+kube-system   deployment.apps/metrics-server   1/1     1            1           5m11s
+
+NAMESPACE     NAME                     TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                  AGE
+default       service/kubernetes       ClusterIP   10.96.0.1        <none>        443/TCP                  5m39s
+kube-system   service/kube-dns         ClusterIP   10.96.0.10       <none>        53/UDP,53/TCP,9153/TCP   5m38s
+kube-system   service/metrics-server   ClusterIP   10.105.232.125   <none>        443/TCP                  5m10s
+
+NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
+kube-system   pod/coredns-66bc5c9577-kj74n               1/1     Running   0          5m32s
+kube-system   pod/etcd-ece-module06                      1/1     Running   0          5m37s
+kube-system   pod/kindnet-dts9x                          1/1     Running   0          5m32s
+kube-system   pod/kube-apiserver-ece-module06            1/1     Running   0          5m37s
+kube-system   pod/kube-controller-manager-ece-module06   1/1     Running   0          5m37s
+kube-system   pod/kube-proxy-2pl5g                       1/1     Running   0          5m32s
+kube-system   pod/kube-scheduler-ece-module06            1/1     Running   0          5m37s
+kube-system   pod/metrics-server-b85d78fd7-88xc6         1/1     Running   0          5m11s
+kube-system   pod/storage-provisioner                    1/1     Running   0          5m35s
+
+[exit=0]
+$ minikube --profile=ece-module06 stop
+* Stopping node "ece-module06"  ...
+* Powering off "ece-module06" via SSH ...
+* 1 node stopped.
+
+[exit=0]
+$ minikube --profile=ece-module06 status
+ece-module06
+type: Control Plane
+host: Stopped
+kubelet: Stopped
+apiserver: Stopped
+kubeconfig: Stopped
+
+
+[exit=7]
+OK: ressources des trois labs supprimées ; cluster arrêté.

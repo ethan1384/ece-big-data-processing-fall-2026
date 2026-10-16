@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-bootcamp-service
+spec:
+  type: NodePort
+  selector:
+    app: kubernetes-bootcamp  # pods labelled by the Deployment template
+  ports:
+    - port: 8080  # targetPort defaults to port, 8080 is the app port

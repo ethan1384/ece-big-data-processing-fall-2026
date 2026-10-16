@@ -1,0 +1,355 @@
+
+START lab2 2026-10-15T15:51:39.663775+02:00
+
+$ kubectl --context=ece-module06 create namespace lab-configmap-secret
+namespace/lab-configmap-secret created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret create configmap pipeline-config --from-file=execution-06/manifests/lab-2/pipeline-config.properties
+configmap/pipeline-config created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret describe configmap pipeline-config
+Name:         pipeline-config
+Namespace:    lab-configmap-secret
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+pipeline-config.properties:
+----
+# Data Pipeline Configuration
+bronze.path=/mnt/data/bronze
+silver.path=/mnt/data/silver
+gold.path=/mnt/data/gold
+batch.size=1000
+retention.days=90
+log.level=INFO
+spark.cores=4
+kafka.brokers=kafka-0.kafka.svc.cluster.local:9092
+
+
+
+BinaryData
+====
+
+Events:  <none>
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret get configmap pipeline-config -o yaml
+apiVersion: v1
+data:
+  pipeline-config.properties: |
+    # Data Pipeline Configuration
+    bronze.path=/mnt/data/bronze
+    silver.path=/mnt/data/silver
+    gold.path=/mnt/data/gold
+    batch.size=1000
+    retention.days=90
+    log.level=INFO
+    spark.cores=4
+    kafka.brokers=kafka-0.kafka.svc.cluster.local:9092
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2026-10-15T13:51:40Z"
+  name: pipeline-config
+  namespace: lab-configmap-secret
+  resourceVersion: "475"
+  uid: 21f426fa-1836-40e7-b624-4780ceef5a16
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret create configmap data-paths --from-literal=bronze=/mnt/data/bronze --from-literal=silver=/mnt/data/silver --from-literal=gold=/mnt/data/gold
+configmap/data-paths created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret get configmap data-paths -o yaml
+apiVersion: v1
+data:
+  bronze: /mnt/data/bronze
+  gold: /mnt/data/gold
+  silver: /mnt/data/silver
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2026-10-15T13:51:42Z"
+  name: data-paths
+  namespace: lab-configmap-secret
+  resourceVersion: "476"
+  uid: f89edce1-b45c-4560-8bfc-38a6c10d5abe
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/configmap-data-platform.yaml
+configmap/data-platform-config created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret get configmap data-platform-config -o yaml
+apiVersion: v1
+data:
+  application.yaml: |
+    # Data Platform Application Config
+    pipeline:
+      name: bronze-to-silver-etl
+      schedule: "0 2 * * *"
+      timeout_minutes: 120
+    storage:
+      type: s3
+      endpoint: ceph-rgw.ceph-storage.svc.cluster.local:7480
+      region: us-east-1
+    kafka:
+      bootstrap_servers: kafka-0.kafka.svc.cluster.local:9092
+      consumer_group: data-platform-consumers
+      topic_prefix: data.bronze
+  batch_size: "1000"
+  log_level: INFO
+  spark_workers: "4"
+  table_mappings.csv: |
+    source_table,bronze_path,silver_layer
+    customers,/data/bronze/customers,deduplicated_customers
+    orders,/data/bronze/orders,aggregated_orders
+    products,/data/bronze/products,product_catalog
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"application.yaml":"# Data Platform Application Config\npipeline:\n  name: bronze-to-silver-etl\n  schedule: \"0 2 * * *\"\n  timeout_minutes: 120\nstorage:\n  type: s3\n  endpoint: ceph-rgw.ceph-storage.svc.cluster.local:7480\n  region: us-east-1\nkafka:\n  bootstrap_servers: kafka-0.kafka.svc.cluster.local:9092\n  consumer_group: data-platform-consumers\n  topic_prefix: data.bronze\n","batch_size":"1000","log_level":"INFO","spark_workers":"4","table_mappings.csv":"source_table,bronze_path,silver_layer\ncustomers,/data/bronze/customers,deduplicated_customers\norders,/data/bronze/orders,aggregated_orders\nproducts,/data/bronze/products,product_catalog\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"data-platform-config","namespace":"lab-configmap-secret"}}
+  creationTimestamp: "2026-10-15T13:51:43Z"
+  name: data-platform-config
+  namespace: lab-configmap-secret
+  resourceVersion: "479"
+  uid: cd00a1a2-24f7-4858-9258-b130425e9e6c
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret get configmap data-platform-config -o 'jsonpath={.data.log_level}'
+INFO
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret get configmap data-platform-config -o 'jsonpath={.data.application\.yaml}'
+# Data Platform Application Config
+pipeline:
+  name: bronze-to-silver-etl
+  schedule: "0 2 * * *"
+  timeout_minutes: 120
+storage:
+  type: s3
+  endpoint: ceph-rgw.ceph-storage.svc.cluster.local:7480
+  region: us-east-1
+kafka:
+  bootstrap_servers: kafka-0.kafka.svc.cluster.local:9092
+  consumer_group: data-platform-consumers
+  topic_prefix: data.bronze
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret create secret generic ceph-credentials --from-literal=access-key=EXEMPLE_CLE_ACCES_MASQUEE --from-literal=secret-key=EXEMPLE_CLE_SECRETE_MASQUEE
+secret/ceph-credentials created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret create secret generic s3-credentials --from-file=execution-06/manifests/lab-2/s3-credentials.txt
+secret/s3-credentials created
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/secret-ceph-credentials.yaml
+secret/ceph-s3-credentials created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret get secret ceph-credentials -o yaml
+apiVersion: v1
+data:
+  access-key: [BASE64_CLE_ACCES_MASQUEE]
+  secret-key: [BASE64_CLE_SECRETE_MASQUEE]
+kind: Secret
+metadata:
+  creationTimestamp: "2026-10-15T13:51:46Z"
+  name: ceph-credentials
+  namespace: lab-configmap-secret
+  resourceVersion: "481"
+  uid: 8befa966-e53b-43ad-817d-ff50e82bbabe
+type: Opaque
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret get secret s3-credentials -o yaml
+apiVersion: v1
+data:
+  s3-credentials.txt: [BASE64_FICHIER_EXEMPLE_MASQUE]
+kind: Secret
+metadata:
+  creationTimestamp: "2026-10-15T13:51:47Z"
+  name: s3-credentials
+  namespace: lab-configmap-secret
+  resourceVersion: "483"
+  uid: 58e9ea5f-f1ae-4cd4-acdc-cf18b3cc6581
+type: Opaque
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret get secret ceph-s3-credentials -o yaml
+apiVersion: v1
+data:
+  access-key: [BASE64_CLE_ACCES_MASQUEE]
+  bucket: ZGF0YS1wbGF0Zm9ybS1icm9uemU=
+  endpoint: Y2VwaC1yZ3cuY2VwaC1zdG9yYWdlLnN2Yy5jbHVzdGVyLmxvY2FsOjc0ODA=
+  secret-key: [BASE64_CLE_SECRETE_MASQUEE]
+kind: Secret
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Secret","metadata":{"annotations":{},"name":"ceph-s3-credentials","namespace":"lab-configmap-secret"},"stringData":{"access-key":"EXEMPLE_CLE_ACCES_MASQUEE","bucket":"data-platform-bronze","endpoint":"ceph-rgw.ceph-storage.svc.cluster.local:7480","secret-key":"EXEMPLE_CLE_SECRETE_MASQUEE"},"type":"Opaque"}
+  creationTimestamp: "2026-10-15T13:51:47Z"
+  name: ceph-s3-credentials
+  namespace: lab-configmap-secret
+  resourceVersion: "485"
+  uid: 4ffaace0-cf38-48c6-8065-0f3f2a0321f2
+type: Opaque
+[exit=0]
+
+$ kubectl --context=ece-module06 get secret ceph-s3-credentials -n lab-configmap-secret -o json
+{
+    "apiVersion": "v1",
+    "data": {
+        "access-key": "[BASE64_CLE_ACCES_MASQUEE]",
+        "bucket": "ZGF0YS1wbGF0Zm9ybS1icm9uemU=",
+        "endpoint": "Y2VwaC1yZ3cuY2VwaC1zdG9yYWdlLnN2Yy5jbHVzdGVyLmxvY2FsOjc0ODA=",
+        "secret-key": "[BASE64_CLE_SECRETE_MASQUEE]"
+    },
+    "kind": "Secret",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Secret\",\"metadata\":{\"annotations\":{},\"name\":\"ceph-s3-credentials\",\"namespace\":\"lab-configmap-secret\"},\"stringData\":{\"access-key\":\"EXEMPLE_CLE_ACCES_MASQUEE\",\"bucket\":\"data-platform-bronze\",\"endpoint\":\"ceph-rgw.ceph-storage.svc.cluster.local:7480\",\"secret-key\":\"EXEMPLE_CLE_SECRETE_MASQUEE\"},\"type\":\"Opaque\"}\n"
+        },
+        "creationTimestamp": "2026-10-15T13:51:47Z",
+        "name": "ceph-s3-credentials",
+        "namespace": "lab-configmap-secret",
+        "resourceVersion": "485",
+        "uid": "4ffaace0-cf38-48c6-8065-0f3f2a0321f2"
+    },
+    "type": "Opaque"
+}
+[exit=0]
+Decoded sample credentials: {"access-key": "EXEMPLE_CLE_ACCES_MASQUEE", "bucket": "data-platform-bronze", "endpoint": "ceph-rgw.ceph-storage.svc.cluster.local:7480", "secret-key": "EXEMPLE_CLE_SECRETE_MASQUEE"}
+
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/pod-with-configmap.yaml
+pod/spark-app created
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/pod-with-secret.yaml
+pod/ceph-connector created
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/pod-with-configmap-volume.yaml
+pod/spark-config-reader created
+[exit=0]
+
+$ kubectl --context=ece-module06 apply -f execution-06/manifests/lab-2/pod-with-secret-volume.yaml
+pod/ceph-connector-secure created
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret wait --for=condition=Ready pod/spark-app pod/spark-config-reader pod/ceph-connector-secure --timeout=180s
+pod/spark-app condition met
+pod/spark-config-reader condition met
+pod/ceph-connector-secure condition met
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret exec spark-app -- env
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOSTNAME=spark-app
+SPARK_WORKERS=4
+spark_workers=4
+table_mappings.csv=source_table,bronze_path,silver_layer
+customers,/data/bronze/customers,deduplicated_customers
+orders,/data/bronze/orders,aggregated_orders
+products,/data/bronze/products,product_catalog
+
+application.yaml=# Data Platform Application Config
+pipeline:
+  name: bronze-to-silver-etl
+  schedule: "0 2 * * *"
+  timeout_minutes: 120
+storage:
+  type: s3
+  endpoint: ceph-rgw.ceph-storage.svc.cluster.local:7480
+  region: us-east-1
+kafka:
+  bootstrap_servers: kafka-0.kafka.svc.cluster.local:9092
+  consumer_group: data-platform-consumers
+  topic_prefix: data.bronze
+
+batch_size=1000
+log_level=INFO
+LOG_LEVEL=INFO
+KUBERNETES_PORT_443_TCP_ADDR=10.96.0.1
+KUBERNETES_SERVICE_HOST=10.96.0.1
+KUBERNETES_SERVICE_PORT=443
+KUBERNETES_SERVICE_PORT_HTTPS=443
+KUBERNETES_PORT=tcp://10.96.0.1:443
+KUBERNETES_PORT_443_TCP=tcp://10.96.0.1:443
+KUBERNETES_PORT_443_TCP_PROTO=tcp
+KUBERNETES_PORT_443_TCP_PORT=443
+HOME=/root
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret wait '--for=jsonpath={.status.phase}=Succeeded' pod/ceph-connector --timeout=60s
+pod/ceph-connector condition met
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret logs ceph-connector
+Access Key: EXEMPLE_CLE_ACCES_MASQUEE
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret exec spark-config-reader -- ls -la /etc/config/
+total 12
+drwxrwxrwx    3 root     root          4096 Oct 15 13:51 .
+drwxr-xr-x    1 root     root          4096 Oct 15 13:51 ..
+drwxr-xr-x    2 root     root          4096 Oct 15 13:51 ..2026_10_15_13_51_52.2528143829
+lrwxrwxrwx    1 root     root            32 Oct 15 13:51 ..data -> ..2026_10_15_13_51_52.2528143829
+lrwxrwxrwx    1 root     root            23 Oct 15 13:51 application.yaml -> ..data/application.yaml
+lrwxrwxrwx    1 root     root            17 Oct 15 13:51 tables.csv -> ..data/tables.csv
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret exec spark-config-reader -- cat /etc/config/application.yaml
+# Data Platform Application Config
+pipeline:
+  name: bronze-to-silver-etl
+  schedule: "0 2 * * *"
+  timeout_minutes: 120
+storage:
+  type: s3
+  endpoint: ceph-rgw.ceph-storage.svc.cluster.local:7480
+  region: us-east-1
+kafka:
+  bootstrap_servers: kafka-0.kafka.svc.cluster.local:9092
+  consumer_group: data-platform-consumers
+  topic_prefix: data.bronze
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret exec spark-config-reader -- cat /etc/config/tables.csv
+source_table,bronze_path,silver_layer
+customers,/data/bronze/customers,deduplicated_customers
+orders,/data/bronze/orders,aggregated_orders
+products,/data/bronze/products,product_catalog
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret exec ceph-connector-secure -- ls -laL /etc/ceph-credentials/
+total 8
+drwxrwxrwt    3 root     root           100 Oct 15 13:51 .
+drwxr-xr-x    1 root     root          4096 Oct 15 13:51 ..
+drwxr-xr-x    2 root     root            60 Oct 15 13:51 ..2026_10_15_13_51_53.1005259882
+drwxr-xr-x    2 root     root            60 Oct 15 13:51 ..data
+-rw-------    1 root     root           116 Oct 15 13:51 s3-credentials.txt
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret exec ceph-connector-secure -- cat /etc/ceph-credentials/s3-credentials.txt
+[default]
+aws_access_key_id = EXEMPLE_CLE_ACCES_MASQUEE
+aws_secret_access_key = EXEMPLE_CLE_SECRETE_MASQUEE
+[exit=0]
+
+$ kubectl --context=ece-module06 -n lab-configmap-secret get pods
+NAME                    READY   STATUS      RESTARTS   AGE
+ceph-connector          0/1     Completed   0          10s
+ceph-connector-secure   1/1     Running     0          9s
+spark-app               1/1     Running     0          11s
+spark-config-reader     1/1     Running     0          9s
+[exit=0]
+
+$ kubectl --context=ece-module06 delete namespace lab-configmap-secret --wait=true
+namespace "lab-configmap-secret" deleted
+[exit=0]
+COMPLETED: lab2
